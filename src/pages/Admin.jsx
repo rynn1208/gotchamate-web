@@ -19,7 +19,9 @@ function Admin() {
 
   const fetchHistory = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/struk");
+      const response = await fetch(
+        "https://gotchamate-api.vercel.app//api/struk",
+      );
       const data = await response.json();
       setHistoryStruk(data);
     } catch (error) {
@@ -48,11 +50,14 @@ function Admin() {
   const handleCetakStruk = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch("http://localhost:5000/api/struk", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      const response = await fetch(
+        "https://gotchamate-api.vercel.app//api/struk",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        },
+      );
 
       if (response.ok) {
         const dataBaru = await response.json();
