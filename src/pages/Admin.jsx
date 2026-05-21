@@ -1,307 +1,238 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import html2canvas from "html2canvas";
 
 function Admin() {
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [passwordInput, setPasswordInput] = useState("");
+  const [klien, setKlien] = useState("");
+  const [layanan, setLayanan] = useState("");
+  const [totalHarga, setTotalHarga] = useState("");
+  const [status, setStatus] = useState("Belum Lunas");
 
-  const [formData, setFormData] = useState({
-    nama: "",
-    tugas: "",
-    harga: "",
-    status: "Lunas",
-  });
   const [historyStruk, setHistoryStruk] = useState([]);
-  const [strukCetak, setStrukCetak] = useState(null);
+  const [selectedStruk, setSelectedStruk] = useState(null);
 
-  // === STATE BARU UNTUK FITUR SORTING ===
-  const [sortType, setSortType] = useState("Terbaru");
+  // Referensi kamera untuk area struk
+  const strukRef = useRef(null);
+
+  // ⚠️ PENTING: Ganti dengan URL Vercel Backend kamu!
+  const API_URL = "https://gotchamate-web.vercel.app/api/struk";
+
+  // Mengambil data riwayat dari database saat halaman dimuat
+  useEffect(() => {
+    fetchHistory();
+  }, []);
 
   const fetchHistory = async () => {
     try {
-      const response = await fetch(
-        "https://gotchamate-api.vercel.app//api/struk",
-      );
+      const response = await fetch(API_URL);
       const data = await response.json();
       setHistoryStruk(data);
     } catch (error) {
-      console.error("Gagal mengambil data history:", error);
+      console.error("Gagal mengambil data riwayat:", error);
     }
-  };
-
-  useEffect(() => {
-    if (isAdmin) fetchHistory();
-  }, [isAdmin]);
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (passwordInput === "adminjoki123") {
-      setIsAdmin(true);
-      setPasswordInput("");
-    } else {
-      alert("Password salah!");
-    }
-  };
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleCetakStruk = async (e) => {
     e.preventDefault();
-    try {
-      const response = await fetch(
-        "https://gotchamate-api.vercel.app//api/struk",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        },
-      );
 
-      if (response.ok) {
-        const dataBaru = await response.json();
-        setFormData({ nama: "", tugas: "", harga: "", status: "Lunas" });
-        fetchHistory();
-        setStrukCetak(dataBaru);
-      } else {
-        alert("Gagal menyimpan struk.");
-      }
+    const dataBaru = { klien, layanan, totalHarga: Number(totalHarga), status };
+
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dataBaru),
+      });
+
+      const result = await response.json();
+
+      // Kosongkan form setelah berhasil
+      setKlien("");
+      setLayanan("");
+      setTotalHarga("");
+      setStatus("Belum Lunas");
+
+      // Refresh tabel riwayat
+      fetchHistory();
+
+      // Langsung buka pop-up struk yang baru dibuat
+      setSelectedStruk(result);
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Gagal membuat struk:", error);
+      alert("Terjadi kesalahan saat menyimpan struk.");
     }
   };
 
-  // === LOGIKA PENGURUTAN DATA (SORTING) ===
-  const sortedHistory = [...historyStruk].sort((a, b) => {
-    if (sortType === "Terbaru") return b.nota.localeCompare(a.nota);
-    if (sortType === "Terlama") return a.nota.localeCompare(b.nota);
-    if (sortType === "Harga Tertinggi") return b.harga - a.harga;
-    if (sortType === "Harga Terendah") return a.harga - b.harga;
-    if (sortType === "Nama A-Z") return a.nama.localeCompare(b.nama);
-    if (sortType === "Status") return a.status.localeCompare(b.status);
-    return 0;
-  });
+  const downloadStrukPNG = async () => {
+    const element = strukRef.current;
+    if (!element) return;
 
-  if (!isAdmin) {
-    return (
-      <div style={adminStyles.loginPage}>
-        <form onSubmit={handleLogin} style={adminStyles.loginForm}>
-          <h2 style={{ color: "var(--amalfi-tile)", marginBottom: "15px" }}>
-            GotchaMate Admin
-          </h2>
-          <input
-            type="password"
-            placeholder="Masukkan Password Admin"
-            value={passwordInput}
-            onChange={(e) => setPasswordInput(e.target.value)}
-            style={adminStyles.inputField}
-            required
-          />
-          <button type="submit" style={adminStyles.btnPrimary}>
-            Akses Dashboard
-          </button>
-          <Link
-            to="/"
-            style={{
-              marginTop: "15px",
-              color: "#666",
-              textDecoration: "none",
-              fontSize: "14px",
-            }}
-          >
-            ← Kembali ke Beranda
-          </Link>
-        </form>
-      </div>
-    );
-  }
+    try {
+      // Memotret elemen dengan skala 2x lipat agar gambarnya HD
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+      });
+      const dataUrl = canvas.toDataURL("image/png");
+
+      // Membuat link download otomatis
+      const link = document.createElement("a");
+      link.download = `Struk_GotchaMate_${selectedStruk.klien}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (error) {
+      console.error("Gagal membuat PNG:", error);
+      alert("Waduh, gagal mendownload gambar struk.");
+    }
+  };
 
   return (
     <div style={adminStyles.dashboardWrapper}>
+      {/* HEADER DASHBOARD */}
       <div style={adminStyles.dbHeader}>
-        <h2>Dashboard Internal GotchaMate</h2>
-        <div style={{ display: "flex", gap: "15px", alignItems: "center" }}>
+        <h1 style={{ color: "var(--deep-navy)", margin: 0, fontSize: "24px" }}>
+          Dashboard Admin GotchaMate
+        </h1>
+        <div style={{ display: "flex", gap: "10px" }}>
           <Link to="/" style={adminStyles.btnSecondary}>
-            Lihat Web Klien
+            Lihat Web
           </Link>
-          <button
-            onClick={() => setIsAdmin(false)}
-            style={adminStyles.btnDanger}
-          >
-            Logout
-          </button>
         </div>
       </div>
 
+      {/* KONTEN UTAMA */}
       <div style={adminStyles.dbContent}>
-        {/* FORM INPUT (KIRI) */}
+        {/* KOLOM KIRI: FORM BUAT STRUK BARU */}
         <div style={adminStyles.sectionBox}>
-          <h3>Buat Struk / Nota Baru</h3>
+          <h2 style={{ color: "var(--amalfi-tile)", marginTop: 0 }}>
+            Buat Struk Baru
+          </h2>
           <form onSubmit={handleCetakStruk} style={adminStyles.formContainer}>
-            <input
-              type="text"
-              name="nama"
-              placeholder="Nama Klien"
-              value={formData.nama}
-              onChange={handleChange}
-              style={adminStyles.inputField}
-              required
-            />
-            <input
-              type="text"
-              name="tugas"
-              placeholder="Judul Tugas / Paket SMM"
-              value={formData.tugas}
-              onChange={handleChange}
-              style={adminStyles.inputField}
-              required
-            />
-            <input
-              type="number"
-              name="harga"
-              placeholder="Harga (Contoh: 150000)"
-              value={formData.harga}
-              onChange={handleChange}
-              style={adminStyles.inputField}
-              required
-            />
-
-            <label
-              style={{
-                fontWeight: "bold",
-                fontSize: "14px",
-                color: "#555",
-                marginBottom: "-5px",
-              }}
-            >
-              Status Pembayaran:
-            </label>
-            <select
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              style={adminStyles.inputField}
-              required
-            >
-              <option value="DP">DP (Down Payment)</option>
-              <option value="Pelunasan">Pelunasan</option>
-              <option value="Lunas">Lunas</option>
-            </select>
-
+            <div>
+              <label style={adminStyles.label}>Nama Klien</label>
+              <input
+                type="text"
+                value={klien}
+                onChange={(e) => setKlien(e.target.value)}
+                required
+                style={adminStyles.inputField}
+                placeholder="Contoh: Budi Santoso"
+              />
+            </div>
+            <div>
+              <label style={adminStyles.label}>Layanan / Tugas</label>
+              <input
+                type="text"
+                value={layanan}
+                onChange={(e) => setLayanan(e.target.value)}
+                required
+                style={adminStyles.inputField}
+                placeholder="Contoh: Makalah Sejarah"
+              />
+            </div>
+            <div>
+              <label style={adminStyles.label}>Total Harga (Rp)</label>
+              <input
+                type="number"
+                value={totalHarga}
+                onChange={(e) => setTotalHarga(e.target.value)}
+                required
+                style={adminStyles.inputField}
+                placeholder="Contoh: 50000"
+              />
+            </div>
+            <div>
+              <label style={adminStyles.label}>Status Pembayaran</label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                style={adminStyles.inputField}
+              >
+                <option value="Belum Lunas">Belum Lunas</option>
+                <option value="DP">DP (Setengah)</option>
+                <option value="Lunas">Lunas</option>
+              </select>
+            </div>
             <button type="submit" style={adminStyles.btnPrimary}>
-              Simpan & Generate
+              Simpan & Buat Struk
             </button>
           </form>
         </div>
 
-        {/* TABEL HISTORY (KANAN) */}
-        <div style={{ ...adminStyles.sectionBox, flex: 2 }}>
-          {/* Header Tabel dengan Dropdown Sorting */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "15px",
-            }}
-          >
-            <h3 style={{ margin: 0 }}>Riwayat Transaksi</h3>
-            <select
-              value={sortType}
-              onChange={(e) => setSortType(e.target.value)}
-              style={{
-                ...adminStyles.inputField,
-                width: "auto",
-                padding: "8px 12px",
-                fontSize: "14px",
-              }}
-            >
-              <option value="Terbaru">Urutkan: Terbaru</option>
-              <option value="Terlama">Urutkan: Terlama</option>
-              <option value="Harga Tertinggi">Urutkan: Harga Tertinggi</option>
-              <option value="Harga Terendah">Urutkan: Harga Terendah</option>
-              <option value="Nama A-Z">Urutkan: Klien (A - Z)</option>
-              <option value="Status">Urutkan: Berdasarkan Status</option>
-            </select>
-          </div>
+        {/* KOLOM KANAN: TABEL RIWAYAT */}
+        <div style={adminStyles.sectionBox}>
+          <h2 style={{ color: "var(--amalfi-tile)", marginTop: 0 }}>
+            Riwayat Pesanan
+          </h2>
 
           <div style={{ overflowX: "auto", width: "100%" }}>
             <table style={{ ...adminStyles.table, minWidth: "700px" }}>
               <thead>
-                <tr
-                  style={{
-                    backgroundColor: "var(--amalfi-tile)",
-                    color: "white",
-                  }}
-                >
-                  <th style={adminStyles.th}>No. Nota</th>
+                <tr style={{ backgroundColor: "var(--cream-gelato)" }}>
                   <th style={adminStyles.th}>Tanggal</th>
                   <th style={adminStyles.th}>Klien</th>
-                  <th style={adminStyles.th}>Total</th>
+                  <th style={adminStyles.th}>Layanan</th>
                   <th style={adminStyles.th}>Status</th>
                   <th style={adminStyles.th}>Aksi</th>
                 </tr>
               </thead>
               <tbody>
-                {/* Kita melakukan pemetaan pada sortedHistory, bukan historyStruk */}
-                {sortedHistory.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan="6"
-                      style={{ padding: "15px", textAlign: "center" }}
-                    >
-                      Belum ada data transaksi.
+                {historyStruk.map((item) => (
+                  <tr key={item._id} style={{ borderBottom: "1px solid #eee" }}>
+                    <td style={adminStyles.td}>
+                      {new Date(item.tanggal).toLocaleDateString("id-ID")}
+                    </td>
+                    <td style={adminStyles.td}>
+                      <strong>{item.klien}</strong>
+                    </td>
+                    <td style={adminStyles.td}>{item.layanan}</td>
+                    <td style={adminStyles.td}>
+                      <span
+                        style={{
+                          padding: "4px 8px",
+                          borderRadius: "4px",
+                          fontSize: "12px",
+                          fontWeight: "bold",
+                          backgroundColor:
+                            item.status === "Lunas"
+                              ? "#d4edda"
+                              : item.status === "DP"
+                                ? "#fff3cd"
+                                : "#f8d7da",
+                          color:
+                            item.status === "Lunas"
+                              ? "#155724"
+                              : item.status === "DP"
+                                ? "#856404"
+                                : "#721c24",
+                        }}
+                      >
+                        {item.status}
+                      </span>
+                    </td>
+                    <td style={adminStyles.td}>
+                      <button
+                        onClick={() => setSelectedStruk(item)}
+                        style={adminStyles.btnCetakMini}
+                      >
+                        Lihat Struk
+                      </button>
                     </td>
                   </tr>
-                ) : (
-                  sortedHistory.map((item) => (
-                    <tr
-                      key={item._id}
-                      style={{ borderBottom: "1px solid #ddd" }}
+                ))}
+                {historyStruk.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan="5"
+                      style={{
+                        textAlign: "center",
+                        padding: "20px",
+                        color: "#888",
+                      }}
                     >
-                      <td style={adminStyles.td}>
-                        <strong>{item.nota}</strong>
-                      </td>
-                      <td style={adminStyles.td}>{item.tanggal}</td>
-                      <td style={adminStyles.td}>{item.nama}</td>
-                      <td style={adminStyles.td}>
-                        Rp{item.harga.toLocaleString("id-ID")}
-                      </td>
-                      <td style={adminStyles.td}>
-                        <span
-                          style={{
-                            padding: "4px 8px",
-                            borderRadius: "4px",
-                            fontSize: "12px",
-                            fontWeight: "bold",
-                            backgroundColor:
-                              item.status === "Lunas"
-                                ? "#d4edda"
-                                : item.status === "DP"
-                                  ? "#fff3cd"
-                                  : "#cce5ff",
-                            color:
-                              item.status === "Lunas"
-                                ? "#155724"
-                                : item.status === "DP"
-                                  ? "#856404"
-                                  : "#004085",
-                          }}
-                        >
-                          {item.status}
-                        </span>
-                      </td>
-                      <td style={adminStyles.td}>
-                        <button
-                          onClick={() => setStrukCetak(item)}
-                          style={adminStyles.btnCetakMini}
-                        >
-                          Cetak
-                        </button>
-                      </td>
-                    </tr>
-                  ))
+                      Belum ada riwayat struk.
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
@@ -309,114 +240,75 @@ function Admin() {
         </div>
       </div>
 
-      {/* MODAL POP-UP CETAK STRUK */}
-      {strukCetak && (
+      {/* === MODAL POP-UP STRUK === */}
+      {selectedStruk && (
         <div style={adminStyles.modalOverlay}>
-          <div id="area-cetak" style={adminStyles.strukCard}>
-            <div style={adminStyles.strukHeader}>
-              <h1 style={{ color: "var(--amalfi-tile)", margin: 0 }}>
-                GotchaMate
-              </h1>
-              <p style={{ color: "#666", fontSize: "14px", margin: 0 }}>
-                Tugas Beres, Sosmed Sukses.
-              </p>
-            </div>
-
-            <div style={adminStyles.strukBody}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  marginBottom: "5px",
-                }}
-              >
-                <span>
-                  <strong>No. Nota:</strong>
-                </span>
-                <span>{strukCetak.nota}</span>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  marginBottom: "15px",
-                }}
-              >
-                <span>
-                  <strong>Tanggal:</strong>
-                </span>
-                <span>{strukCetak.tanggal}</span>
-              </div>
-
-              <div
-                style={{
-                  borderTop: "2px dashed #ccc",
-                  borderBottom: "2px dashed #ccc",
-                  padding: "15px 0",
-                  margin: "15px 0",
-                }}
-              >
-                <p style={{ marginBottom: "5px" }}>
-                  <strong>Klien:</strong> {strukCetak.nama}
-                </p>
-                <p style={{ marginBottom: "5px" }}>
-                  <strong>Layanan:</strong> {strukCetak.tugas}
-                </p>
-                <p style={{ margin: 0 }}>
-                  <strong>Status Pembayaran:</strong>{" "}
-                  <span
-                    style={{ fontWeight: "bold", color: "var(--amalfi-tile)" }}
-                  >
-                    {strukCetak.status}
-                  </span>
+          <div>
+            {/* AREA INI YANG AKAN DIFOTO */}
+            <div style={adminStyles.strukCard} ref={strukRef}>
+              <div style={adminStyles.strukHeader}>
+                <h2 style={{ color: "var(--amalfi-tile)", margin: 0 }}>
+                  GotchaMate
+                </h2>
+                <p style={{ margin: "5px 0", fontSize: "14px", color: "#666" }}>
+                  Tanda Terima Pembayaran
                 </p>
               </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  fontSize: "18px",
-                  color: "var(--amalfi-tile)",
-                }}
-              >
-                <span>
-                  <strong>TOTAL:</strong>
-                </span>
-                <span>
-                  <strong>Rp{strukCetak.harga.toLocaleString("id-ID")}</strong>
-                </span>
+              <div style={adminStyles.strukBody}>
+                <p>
+                  <strong>No. Nota:</strong>{" "}
+                  {selectedStruk._id.slice(-6).toUpperCase()}
+                </p>
+                <p>
+                  <strong>Tanggal:</strong>{" "}
+                  {new Date(selectedStruk.tanggal).toLocaleDateString("id-ID")}
+                </p>
+                <p>
+                  <strong>Klien:</strong> {selectedStruk.klien}
+                </p>
+                <p>
+                  <strong>Layanan:</strong> {selectedStruk.layanan}
+                </p>
+                <p>
+                  <strong>Total Harga:</strong> Rp{" "}
+                  {selectedStruk.totalHarga.toLocaleString("id-ID")}
+                </p>
+                <p>
+                  <strong>Status:</strong> {selectedStruk.status}
+                </p>
+                <hr
+                  style={{
+                    margin: "20px 0",
+                    border: "none",
+                    borderTop: "1px dashed #ccc",
+                  }}
+                />
+                <p
+                  style={{
+                    textAlign: "center",
+                    fontSize: "13px",
+                    fontStyle: "italic",
+                  }}
+                >
+                  Terima kasih telah mempercayakan tugasmu pada GotchaMate! ✨
+                </p>
               </div>
             </div>
 
+            {/* AREA TOMBOL */}
             <div
               style={{
-                textAlign: "center",
-                marginTop: "20px",
-                color: "#888",
-                fontSize: "12px",
+                display: "flex",
+                gap: "10px",
+                marginTop: "15px",
+                justifyContent: "center",
               }}
             >
-              <p>Terima kasih telah menggunakan jasa kami!</p>
-              <p>We got your back!</p>
-            </div>
-
-            <div
-              className="no-print"
-              style={{ display: "flex", gap: "10px", marginTop: "25px" }}
-            >
-              <button
-                onClick={() => window.print()}
-                style={{
-                  ...adminStyles.btnPrimary,
-                  backgroundColor: "var(--citrus-zest)",
-                  color: "var(--amalfi-tile)",
-                }}
-              >
-                🖨️ Simpan PDF / Print
+              <button onClick={downloadStrukPNG} style={adminStyles.btnPrimary}>
+                📥 Download PNG
               </button>
               <button
-                onClick={() => setStrukCetak(null)}
+                onClick={() => setSelectedStruk(null)}
                 style={adminStyles.btnDanger}
               >
                 Tutup
@@ -429,37 +321,13 @@ function Admin() {
   );
 }
 
+// === GAYA CSS INTERNAL ===
 const adminStyles = {
-  // Tambahan padding agar di HP tidak menempel ke pinggir layar
-  loginPage: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    minHeight: "100vh",
-    backgroundColor: "var(--cream-gelato)",
-    padding: "20px",
-  },
-
-  // width diubah jadi 100% dengan batas maksimal 350px agar otomatis mengecil di HP
-  loginForm: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    backgroundColor: "white",
-    padding: "40px",
-    borderRadius: "12px",
-    boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-    width: "100%",
-    maxWidth: "350px",
-  },
-
   dashboardWrapper: {
     minHeight: "100vh",
     backgroundColor: "#fdfbf7",
     padding: "20px",
   },
-
-  // Ditambahkan flexWrap agar tombol "Logout" dan "Lihat Web" bisa turun ke bawah jika layar sempit
   dbHeader: {
     display: "flex",
     justifyContent: "space-between",
@@ -470,10 +338,7 @@ const adminStyles = {
     flexWrap: "wrap",
     gap: "15px",
   },
-
   dbContent: { display: "flex", gap: "20px", flexWrap: "wrap" },
-
-  // flexBasis 100% memastikan kotaknya langsung mengambil lebar penuh saat turun ke bawah
   sectionBox: {
     backgroundColor: "white",
     padding: "20px",
@@ -482,12 +347,18 @@ const adminStyles = {
     flex: "1 1 100%",
     minWidth: "250px",
   },
-
   formContainer: {
     display: "flex",
     flexDirection: "column",
     gap: "15px",
     marginTop: "15px",
+  },
+  label: {
+    fontWeight: "bold",
+    color: "#444",
+    fontSize: "14px",
+    marginBottom: "5px",
+    display: "block",
   },
   inputField: {
     padding: "12px",
@@ -497,6 +368,7 @@ const adminStyles = {
     width: "100%",
     outline: "none",
     backgroundColor: "white",
+    boxSizing: "border-box",
   },
   btnPrimary: {
     backgroundColor: "var(--amalfi-tile)",
@@ -542,10 +414,8 @@ const adminStyles = {
     marginTop: "15px",
     textAlign: "left",
   },
-  th: { padding: "12px", fontSize: "15px" },
+  th: { padding: "12px", fontSize: "15px", color: "#444" },
   td: { padding: "12px", fontSize: "15px", color: "#444" },
-
-  // Tambahan padding agar pop-up tidak mepet tepi layar
   modalOverlay: {
     position: "fixed",
     top: 0,
@@ -559,8 +429,6 @@ const adminStyles = {
     zIndex: 9999,
     padding: "20px",
   },
-
-  // Tambahan maxHeight & overflowY agar jika struk panjang, bisa di-scroll di dalam HP
   strukCard: {
     backgroundColor: "white",
     padding: "30px",
@@ -571,7 +439,6 @@ const adminStyles = {
     maxHeight: "90vh",
     overflowY: "auto",
   },
-
   strukHeader: {
     textAlign: "center",
     borderBottom: "2px solid var(--sea-breeze)",
