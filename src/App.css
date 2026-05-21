@@ -1,0 +1,471 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap");
+
+:root {
+  --amalfi-tile: #2e5aa7;
+  --sea-breeze: #86c5ff;
+  --citrus-zest: #ffa62b;
+  --cream-gelato: #f8e6a0;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+body {
+  background-color: var(--cream-gelato);
+  color: #333;
+  overflow-x: hidden;
+}
+
+/* === NAVBAR === */
+.navbar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 50px;
+  background-color: var(--amalfi-tile);
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15); /* Shadow lebih lembut */
+  transition: all 0.3s ease;
+}
+
+.nav-links-menu {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+}
+
+/* Efek Hover untuk Link Navbar */
+.nav-link {
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  transition:
+    color 0.3s ease,
+    transform 0.3s ease;
+}
+
+.nav-link:hover {
+  color: var(--cream-gelato);
+  transform: translateY(-2px);
+}
+
+.btn-admin {
+  background-color: var(--cream-gelato);
+  color: var(--amalfi-tile);
+  padding: 8px 18px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.btn-admin:hover {
+  background-color: white;
+  box-shadow: 0 4px 10px rgba(248, 230, 160, 0.5);
+  transform: translateY(-2px);
+}
+
+.hamburger-btn {
+  display: none;
+  font-size: 32px;
+  background: none;
+  border: none;
+  color: var(--citrus-zest);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+/* === HERO SECTION === */
+.hero-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 120px 20px;
+  min-height: calc(100vh - 80px);
+  /* Gradasi halus agar tidak flat */
+  background: linear-gradient(135deg, var(--cream-gelato) 0%, #eee1a8 100%);
+}
+
+.hero-title {
+  font-size: 48px;
+  color: var(--amalfi-tile);
+  margin-bottom: 20px;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.hero-sub {
+  font-size: 18px;
+  color: #555;
+  max-width: 650px;
+  margin-bottom: 40px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* Efek Hover Tombol Utama */
+.cta-button {
+  background-color: var(--citrus-zest);
+  color: var(--amalfi-tile);
+  padding: 15px 35px;
+  font-size: 18px;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 6px 15px rgba(255, 166, 43, 0.3);
+  transition: all 0.3s ease;
+}
+
+.cta-button:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(255, 166, 43, 0.5);
+  background-color: #ffb446;
+}
+
+/* === SERVICES / PRICELIST === */
+.services-section {
+  padding: 100px 20px;
+  background-color: white;
+  text-align: center;
+  min-height: auto;
+}
+
+.section-title {
+  font-size: 36px;
+  color: var(--amalfi-tile);
+  margin-bottom: 50px;
+}
+
+.card-container {
+  display: flex;
+  justify-content: center;
+  gap: 35px;
+  flex-wrap: wrap;
+}
+
+/* Efek Hover pada Kartu */
+.service-card {
+  background-color: #fff;
+  border: 2px solid #eef5ff;
+  border-radius: 16px;
+  padding: 35px 25px;
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 30px rgba(134, 197, 255, 0.15);
+  transition: all 0.4s ease; /* Transisi sangat mulus */
+}
+
+.service-card:hover {
+  transform: translateY(-12px); /* Kartu naik ke atas saat dihover */
+  border-color: var(--sea-breeze);
+  box-shadow: 0 20px 40px rgba(46, 90, 167, 0.15);
+}
+
+.card-header {
+  background-color: var(--sea-breeze);
+  color: white;
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: bold;
+  margin-bottom: 25px;
+  font-size: 14px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.card-price {
+  font-size: 32px;
+  color: var(--amalfi-tile);
+  margin-bottom: 15px;
+}
+
+.card-price span {
+  font-size: 16px;
+  color: #888;
+}
+
+.card-desc {
+  font-size: 15px;
+  color: #666;
+  margin-bottom: 30px;
+  flex-grow: 1;
+  line-height: 1.6;
+}
+
+/* Efek Hover Tombol Dalam Kartu */
+.card-button {
+  background-color: var(--amalfi-tile);
+  color: white;
+  padding: 14px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+.card-button:hover {
+  background-color: #244888;
+  box-shadow: 0 5px 15px rgba(46, 90, 167, 0.3);
+}
+
+/* === FOOTER === */
+footer {
+  background-color: var(--amalfi-tile);
+  color: white;
+  text-align: center;
+  padding: 25px;
+  font-size: 14px;
+}
+
+/* === RESPONSIVE HP === */
+@media (max-width: 768px) {
+  .navbar-container {
+    padding: 15px 20px;
+  }
+  .hamburger-btn {
+    display: block;
+  }
+
+  .nav-links-menu {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    background-color: var(--amalfi-tile);
+    position: absolute;
+    top: 100%;
+    left: 0;
+    padding: 20px;
+    gap: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  .nav-links-menu.active {
+    display: flex;
+  }
+  .nav-links-menu a {
+    width: 100%;
+    text-align: center;
+    padding: 10px 0;
+  }
+
+  .hero-title {
+    font-size: 32px;
+  }
+  .hero-sub {
+    font-size: 15px;
+  }
+  .hero-section,
+  .services-section {
+    padding: 60px 20px;
+  }
+}
+
+/* === FAT FOOTER === */
+.fat-footer {
+  background-color: var(--amalfi-tile);
+  color: white;
+  padding: 60px 50px 20px 50px;
+}
+
+.footer-content {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 40px;
+  margin-bottom: 40px;
+}
+
+.footer-brand {
+  flex: 2;
+  min-width: 250px;
+  text-align: left;
+}
+
+.footer-brand h2 {
+  color: var(--citrus-zest);
+  margin-bottom: 15px;
+  font-size: 28px;
+}
+
+.footer-brand p {
+  color: #d1e5ff;
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 300px;
+}
+
+.footer-links {
+  flex: 1;
+  min-width: 150px;
+  text-align: left;
+}
+
+.footer-links h3,
+.footer-social h3 {
+  font-size: 18px;
+  margin-bottom: 20px;
+  color: var(--cream-gelato);
+}
+
+.footer-links ul {
+  list-style: none;
+}
+
+.footer-links ul li {
+  margin-bottom: 12px;
+}
+
+.footer-links ul li a {
+  color: #d1e5ff;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.3s ease;
+}
+
+.footer-links ul li a:hover {
+  color: var(--citrus-zest);
+}
+
+.footer-social {
+  flex: 1;
+  min-width: 150px;
+  text-align: left;
+}
+
+.social-icons {
+  display: flex;
+  gap: 15px;
+}
+
+.social-btn {
+  display: inline-block;
+  padding: 8px 15px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.social-btn:hover {
+  background-color: var(--citrus-zest);
+  color: var(--amalfi-tile);
+  transform: translateY(-3px);
+}
+
+.footer-bottom {
+  text-align: center;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 13px;
+  color: #a0c4f2;
+}
+/* === FAQ SECTION === */
+.faq-section {
+  padding: 80px 20px;
+  background-color: var(
+    --cream-gelato
+  ); /* Menggunakan warna krem agar kontras dengan bagian layanan yang putih */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.faq-container {
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.faq-item {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.faq-item:hover {
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+}
+
+.faq-question {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--amalfi-tile);
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.faq-question:hover {
+  background-color: #fcfdfd;
+}
+
+.faq-icon {
+  font-size: 20px;
+  color: var(--citrus-zest);
+  transition: transform 0.3s ease;
+}
+
+/* Memutar ikon silang saat FAQ terbuka */
+.faq-item.open .faq-icon {
+  transform: rotate(45deg);
+}
+
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  color: #555;
+  font-size: 15px;
+  line-height: 1.6;
+  padding: 0 20px;
+  transition: all 0.3s ease-in-out;
+}
+
+/* Membuka jawaban */
+.faq-item.open .faq-answer {
+  max-height: 300px; /* Angka yang cukup besar untuk menampung teks */
+  padding: 0 20px 20px 20px;
+}
+
+/* Optimasi FAQ untuk HP */
+@media (max-width: 768px) {
+  .faq-section {
+    padding: 60px 20px;
+  }
+  .faq-question {
+    font-size: 15px;
+    padding: 15px;
+  }
+}
+/* Responsive Footer untuk HP */
+@media (max-width: 768px) {
+  .fat-footer {
+    padding: 50px 20px 20px 20px;
+  }
+  .footer-content {
+    flex-direction: column;
+    gap: 30px;
+  }
+}
