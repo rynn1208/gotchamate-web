@@ -46,16 +46,22 @@ function Admin() {
   const fetchHistory = async () => {
     try {
       const response = await fetch(API_URL);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
-      setHistoryStruk(data);
+      // Pastikan data adalah array
+      setHistoryStruk(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("Gagal mengambil data riwayat:", error);
+      console.error("❌ Gagal mengambil data riwayat:", error);
+      setHistoryStruk([]);
+      alert("⚠️ Gagal mengambil data riwayat. Periksa koneksi backend.");
     }
   };
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (password === "admin123") {
+    if (password === "admin2k26") {
       setIsLoggedIn(true);
       setErrorMsg("");
       setPassword("");
