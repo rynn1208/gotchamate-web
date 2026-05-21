@@ -469,3 +469,30 @@ footer {
     gap: 30px;
   }
 }
+/* === PENGATURAN CETAK PDF / PRINT === */
+@media print {
+  /* Sembunyikan semua elemen di layar */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Tampilkan HANYA elemen yang memiliki class "struk-print-area" */
+  .struk-print-area,
+  .struk-print-area * {
+    visibility: visible;
+  }
+
+  /* Posisikan struk pas di tengah kertas PDF */
+  .struk-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    box-shadow: none !important; /* Hilangkan bayangan agar rapi di kertas */
+  }
+
+  /* Sembunyikan tombol saat dicetak */
+  .hide-on-print {
+    display: none !important;
+  }
+}

@@ -67,14 +67,13 @@ function Home() {
     <div className="app-container">
       {/* NAVBAR */}
       <nav className="navbar-container">
-        <div
-          style={{
-            fontSize: "26px",
-            fontWeight: "bold",
-            color: "var(--citrus-zest)",
-          }}
-        >
-          GotchaMate
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <img
+            src="/logo.png"
+            alt="Logo GotchaMate"
+            style={{ width: "50px", height: "50px", objectFit: "contain" }}
+          />
+          <h1 style={{ margin: 0 }}>GotchaMate</h1>
         </div>
 
         <button

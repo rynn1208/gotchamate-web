@@ -1,14 +1,12 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import html2canvas from "html2canvas";
+import API_BASE_URL from "../config";
 
 function Admin() {
-  // === STATE LOGIN ===
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
-  // === STATE DASHBOARD ===
   const [klien, setKlien] = useState("");
   const [layanan, setLayanan] = useState("");
   const [totalHarga, setTotalHarga] = useState("");
@@ -17,12 +15,28 @@ function Admin() {
   const [historyStruk, setHistoryStruk] = useState([]);
   const [selectedStruk, setSelectedStruk] = useState(null);
 
-  const strukRef = useRef(null);
-
   // ⚠️ PENTING: Ganti dengan URL Vercel Backend kamu!
-  const API_URL = "https://gotchamate-api.vercel.app/api/struk";
+  const API_URL = API_BASE_URL + "/api/struk";
 
-  // Mengambil data riwayat HANYA jika sudah login
+  // Helper function untuk parse tanggal dari berbagai format
+  const formatTanggal = (tanggalStr) => {
+    if (!tanggalStr) return "-";
+    try {
+      // Format baru: YYYY-MM-DD
+      if (tanggalStr.includes("-")) {
+        return new Date(tanggalStr + "T00:00:00Z").toLocaleDateString("id-ID");
+      }
+      // Format lama: DD/M/YYYY
+      if (tanggalStr.includes("/")) {
+        const [hari, bulan, tahun] = tanggalStr.split("/");
+        return new Date(tahun, bulan - 1, hari).toLocaleDateString("id-ID");
+      }
+      return "-";
+    } catch (error) {
+      return "Invalid Date";
+    }
+  };
+
   useEffect(() => {
     if (isLoggedIn) {
       fetchHistory();
@@ -39,10 +53,8 @@ function Admin() {
     }
   };
 
-  // === FUNGSI LOGIN ===
   const handleLogin = (e) => {
     e.preventDefault();
-    // Ganti 'admin123' dengan password rahasia yang kamu inginkan!
     if (password === "admin123") {
       setIsLoggedIn(true);
       setErrorMsg("");
@@ -52,13 +64,11 @@ function Admin() {
     }
   };
 
-  // === FUNGSI LOGOUT ===
   const handleLogout = () => {
     setIsLoggedIn(false);
     setHistoryStruk([]);
   };
 
-  // === FUNGSI BUAT STRUK ===
   const handleCetakStruk = async (e) => {
     e.preventDefault();
     const dataBaru = { klien, layanan, totalHarga: Number(totalHarga), status };
@@ -69,6 +79,11 @@ function Admin() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dataBaru),
       });
+
+      // Jika server mengirim status error (misal 500 atau 400)
+      if (!response.ok) {
+        throw new Error("Server backend gagal menyimpan data ke database.");
+      }
 
       const result = await response.json();
 
@@ -81,33 +96,18 @@ function Admin() {
       setSelectedStruk(result);
     } catch (error) {
       console.error("Gagal membuat struk:", error);
-      alert("Terjadi kesalahan saat menyimpan struk.");
+      // Memunculkan alert alih-alih membuat aplikasi crash
+      alert(
+        `❌ Gagal Membuat Struk! Sesuatu bermasalah pada database/backend. Pesan: ${error.message}`,
+      );
     }
   };
 
-  // === FUNGSI DOWNLOAD GAMBAR ===
-  const downloadStrukPNG = async () => {
-    const element = strukRef.current;
-    if (!element) return;
-
-    try {
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-      });
-      const dataUrl = canvas.toDataURL("image/png");
-
-      const link = document.createElement("a");
-      link.download = `Struk_GotchaMate_${selectedStruk.klien}.png`;
-      link.href = dataUrl;
-      link.click();
-    } catch (error) {
-      console.error("Gagal membuat PNG:", error);
-      alert("Waduh, gagal mendownload gambar struk.");
-    }
+  // Fungsi Print Bawaan Browser
+  const handlePrint = () => {
+    window.print();
   };
 
-  // === TAMPILAN JIKA BELUM LOGIN ===
   if (!isLoggedIn) {
     return (
       <div style={adminStyles.loginPage}>
@@ -123,15 +123,13 @@ function Admin() {
               textAlign: "center",
             }}
           >
-            Masukkan kata sandi untuk mengakses dashboard GotchaMate.
+            Masukkan kata sandi untuk mengakses dashboard.
           </p>
-
           {errorMsg && (
             <p style={{ color: "red", fontSize: "14px", marginBottom: "10px" }}>
               {errorMsg}
             </p>
           )}
-
           <input
             type="password"
             value={password}
@@ -146,7 +144,6 @@ function Admin() {
           >
             Masuk
           </button>
-
           <Link
             to="/"
             style={{
@@ -164,10 +161,8 @@ function Admin() {
     );
   }
 
-  // === TAMPILAN DASHBOARD (JIKA SUDAH LOGIN) ===
   return (
     <div style={adminStyles.dashboardWrapper}>
-      {/* HEADER DASHBOARD */}
       <div style={adminStyles.dbHeader}>
         <h1 style={{ color: "var(--deep-navy)", margin: 0, fontSize: "24px" }}>
           Dashboard Admin GotchaMate
@@ -182,9 +177,7 @@ function Admin() {
         </div>
       </div>
 
-      {/* KONTEN UTAMA */}
       <div style={adminStyles.dbContent}>
-        {/* KOLOM KIRI: FORM BUAT STRUK */}
         <div style={adminStyles.sectionBox}>
           <h2 style={{ color: "var(--amalfi-tile)", marginTop: 0 }}>
             Buat Struk Baru
@@ -241,7 +234,6 @@ function Admin() {
           </form>
         </div>
 
-        {/* KOLOM KANAN: TABEL RIWAYAT */}
         <div style={adminStyles.sectionBox}>
           <h2 style={{ color: "var(--amalfi-tile)", marginTop: 0 }}>
             Riwayat Pesanan
@@ -261,7 +253,7 @@ function Admin() {
                 {historyStruk.map((item) => (
                   <tr key={item._id} style={{ borderBottom: "1px solid #eee" }}>
                     <td style={adminStyles.td}>
-                      {new Date(item.tanggal).toLocaleDateString("id-ID")}
+                      {formatTanggal(item.tanggal)}
                     </td>
                     <td style={adminStyles.td}>
                       <strong>{item.klien}</strong>
@@ -321,11 +313,11 @@ function Admin() {
         </div>
       </div>
 
-      {/* === MODAL POP-UP STRUK === */}
       {selectedStruk && (
         <div style={adminStyles.modalOverlay}>
           <div>
-            <div style={adminStyles.strukCard} ref={strukRef}>
+            {/* Class struk-print-area ditambah agar ditangkap oleh CSS Print */}
+            <div style={adminStyles.strukCard} className="struk-print-area">
               <div style={adminStyles.strukHeader}>
                 <h2 style={{ color: "var(--amalfi-tile)", margin: 0 }}>
                   GotchaMate
@@ -336,25 +328,26 @@ function Admin() {
               </div>
               <div style={adminStyles.strukBody}>
                 <p>
-                  <strong>No. Nota:</strong>{" "}
-                  {selectedStruk._id.slice(-6).toUpperCase()}
+                  <strong>No. Nota:</strong> {selectedStruk?.nota || "BATAL"}
                 </p>
                 <p>
                   <strong>Tanggal:</strong>{" "}
-                  {new Date(selectedStruk.tanggal).toLocaleDateString("id-ID")}
+                  {formatTanggal(selectedStruk?.tanggal)}
                 </p>
                 <p>
-                  <strong>Klien:</strong> {selectedStruk.klien}
+                  <strong>Klien:</strong> {selectedStruk?.klien || "-"}
                 </p>
                 <p>
-                  <strong>Layanan:</strong> {selectedStruk.layanan}
+                  <strong>Layanan:</strong> {selectedStruk?.layanan || "-"}
                 </p>
                 <p>
                   <strong>Total Harga:</strong> Rp{" "}
-                  {selectedStruk.totalHarga.toLocaleString("id-ID")}
+                  {selectedStruk?.totalHarga
+                    ? selectedStruk.totalHarga.toLocaleString("id-ID")
+                    : "0"}
                 </p>
                 <p>
-                  <strong>Status:</strong> {selectedStruk.status}
+                  <strong>Status:</strong> {selectedStruk?.status || "-"}
                 </p>
                 <hr
                   style={{
@@ -374,7 +367,10 @@ function Admin() {
                 </p>
               </div>
             </div>
+
+            {/* Class hide-on-print ditambah agar tombol hilang saat dicetak */}
             <div
+              className="hide-on-print"
               style={{
                 display: "flex",
                 gap: "10px",
@@ -382,8 +378,8 @@ function Admin() {
                 justifyContent: "center",
               }}
             >
-              <button onClick={downloadStrukPNG} style={adminStyles.btnPrimary}>
-                📥 Download PNG
+              <button onClick={handlePrint} style={adminStyles.btnPrimary}>
+                🖨️ Cetak PDF
               </button>
               <button
                 onClick={() => setSelectedStruk(null)}
@@ -399,9 +395,7 @@ function Admin() {
   );
 }
 
-// === GAYA CSS INTERNAL ===
 const adminStyles = {
-  // Tambahan style untuk halaman login
   loginPage: {
     display: "flex",
     justifyContent: "center",
@@ -421,8 +415,6 @@ const adminStyles = {
     width: "100%",
     maxWidth: "350px",
   },
-
-  // Style dashboard
   dashboardWrapper: {
     minHeight: "100vh",
     backgroundColor: "#fdfbf7",
