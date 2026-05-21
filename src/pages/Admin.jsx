@@ -10,7 +10,7 @@ function Admin() {
   const [klien, setKlien] = useState("");
   const [layanan, setLayanan] = useState("");
   const [totalHarga, setTotalHarga] = useState("");
-  const [status, setStatus] = useState("Belum Lunas");
+  const [status, setStatus] = useState("Lunas");
 
   const [historyStruk, setHistoryStruk] = useState([]);
   const [selectedStruk, setSelectedStruk] = useState(null);
@@ -96,7 +96,7 @@ function Admin() {
       setKlien("");
       setLayanan("");
       setTotalHarga("");
-      setStatus("Belum Lunas");
+      setStatus("Lunas");
 
       fetchHistory();
       setSelectedStruk(result);
@@ -229,9 +229,9 @@ function Admin() {
                 onChange={(e) => setStatus(e.target.value)}
                 style={adminStyles.inputField}
               >
-                <option value="Belum Lunas">Belum Lunas</option>
-                <option value="DP">DP (Setengah)</option>
                 <option value="Lunas">Lunas</option>
+                <option value="DP">DP</option>
+                <option value="Pelunasan">Pelunasan</option>
               </select>
             </div>
             <button type="submit" style={adminStyles.btnPrimary}>
@@ -277,13 +277,13 @@ function Admin() {
                               ? "#d4edda"
                               : item.status === "DP"
                                 ? "#fff3cd"
-                                : "#f8d7da",
+                                : "#cfe2ff",
                           color:
                             item.status === "Lunas"
                               ? "#155724"
                               : item.status === "DP"
                                 ? "#856404"
-                                : "#721c24",
+                                : "#084298",
                         }}
                       >
                         {item.status}
