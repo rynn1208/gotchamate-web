@@ -3,6 +3,12 @@ import { Link } from "react-router-dom";
 import html2canvas from "html2canvas";
 
 function Admin() {
+  // === STATE LOGIN ===
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  // === STATE DASHBOARD ===
   const [klien, setKlien] = useState("");
   const [layanan, setLayanan] = useState("");
   const [totalHarga, setTotalHarga] = useState("");
@@ -11,16 +17,17 @@ function Admin() {
   const [historyStruk, setHistoryStruk] = useState([]);
   const [selectedStruk, setSelectedStruk] = useState(null);
 
-  // Referensi kamera untuk area struk
   const strukRef = useRef(null);
 
   // ⚠️ PENTING: Ganti dengan URL Vercel Backend kamu!
-  const API_URL = "https://gotchamate-web.vercel.app/api/struk";
+  const API_URL = "https://gotchamate-api.vercel.app/api/struk";
 
-  // Mengambil data riwayat dari database saat halaman dimuat
+  // Mengambil data riwayat HANYA jika sudah login
   useEffect(() => {
-    fetchHistory();
-  }, []);
+    if (isLoggedIn) {
+      fetchHistory();
+    }
+  }, [isLoggedIn]);
 
   const fetchHistory = async () => {
     try {
@@ -32,9 +39,28 @@ function Admin() {
     }
   };
 
+  // === FUNGSI LOGIN ===
+  const handleLogin = (e) => {
+    e.preventDefault();
+    // Ganti 'admin123' dengan password rahasia yang kamu inginkan!
+    if (password === "admin123") {
+      setIsLoggedIn(true);
+      setErrorMsg("");
+      setPassword("");
+    } else {
+      setErrorMsg("Password salah! Coba lagi.");
+    }
+  };
+
+  // === FUNGSI LOGOUT ===
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setHistoryStruk([]);
+  };
+
+  // === FUNGSI BUAT STRUK ===
   const handleCetakStruk = async (e) => {
     e.preventDefault();
-
     const dataBaru = { klien, layanan, totalHarga: Number(totalHarga), status };
 
     try {
@@ -46,16 +72,12 @@ function Admin() {
 
       const result = await response.json();
 
-      // Kosongkan form setelah berhasil
       setKlien("");
       setLayanan("");
       setTotalHarga("");
       setStatus("Belum Lunas");
 
-      // Refresh tabel riwayat
       fetchHistory();
-
-      // Langsung buka pop-up struk yang baru dibuat
       setSelectedStruk(result);
     } catch (error) {
       console.error("Gagal membuat struk:", error);
@@ -63,19 +85,18 @@ function Admin() {
     }
   };
 
+  // === FUNGSI DOWNLOAD GAMBAR ===
   const downloadStrukPNG = async () => {
     const element = strukRef.current;
     if (!element) return;
 
     try {
-      // Memotret elemen dengan skala 2x lipat agar gambarnya HD
       const canvas = await html2canvas(element, {
         scale: 2,
         backgroundColor: "#ffffff",
       });
       const dataUrl = canvas.toDataURL("image/png");
 
-      // Membuat link download otomatis
       const link = document.createElement("a");
       link.download = `Struk_GotchaMate_${selectedStruk.klien}.png`;
       link.href = dataUrl;
@@ -86,6 +107,64 @@ function Admin() {
     }
   };
 
+  // === TAMPILAN JIKA BELUM LOGIN ===
+  if (!isLoggedIn) {
+    return (
+      <div style={adminStyles.loginPage}>
+        <form onSubmit={handleLogin} style={adminStyles.loginForm}>
+          <h2 style={{ color: "var(--amalfi-tile)", marginBottom: "10px" }}>
+            Login Admin
+          </h2>
+          <p
+            style={{
+              color: "#666",
+              fontSize: "14px",
+              marginBottom: "20px",
+              textAlign: "center",
+            }}
+          >
+            Masukkan kata sandi untuk mengakses dashboard GotchaMate.
+          </p>
+
+          {errorMsg && (
+            <p style={{ color: "red", fontSize: "14px", marginBottom: "10px" }}>
+              {errorMsg}
+            </p>
+          )}
+
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            required
+            style={adminStyles.inputField}
+          />
+          <button
+            type="submit"
+            style={{ ...adminStyles.btnPrimary, marginTop: "15px" }}
+          >
+            Masuk
+          </button>
+
+          <Link
+            to="/"
+            style={{
+              marginTop: "20px",
+              color: "var(--amalfi-tile)",
+              textDecoration: "none",
+              fontSize: "14px",
+              fontWeight: "bold",
+            }}
+          >
+            &larr; Kembali ke Beranda
+          </Link>
+        </form>
+      </div>
+    );
+  }
+
+  // === TAMPILAN DASHBOARD (JIKA SUDAH LOGIN) ===
   return (
     <div style={adminStyles.dashboardWrapper}>
       {/* HEADER DASHBOARD */}
@@ -94,6 +173,9 @@ function Admin() {
           Dashboard Admin GotchaMate
         </h1>
         <div style={{ display: "flex", gap: "10px" }}>
+          <button onClick={handleLogout} style={adminStyles.btnDanger}>
+            Keluar
+          </button>
           <Link to="/" style={adminStyles.btnSecondary}>
             Lihat Web
           </Link>
@@ -102,7 +184,7 @@ function Admin() {
 
       {/* KONTEN UTAMA */}
       <div style={adminStyles.dbContent}>
-        {/* KOLOM KIRI: FORM BUAT STRUK BARU */}
+        {/* KOLOM KIRI: FORM BUAT STRUK */}
         <div style={adminStyles.sectionBox}>
           <h2 style={{ color: "var(--amalfi-tile)", marginTop: 0 }}>
             Buat Struk Baru
@@ -164,7 +246,6 @@ function Admin() {
           <h2 style={{ color: "var(--amalfi-tile)", marginTop: 0 }}>
             Riwayat Pesanan
           </h2>
-
           <div style={{ overflowX: "auto", width: "100%" }}>
             <table style={{ ...adminStyles.table, minWidth: "700px" }}>
               <thead>
@@ -244,7 +325,6 @@ function Admin() {
       {selectedStruk && (
         <div style={adminStyles.modalOverlay}>
           <div>
-            {/* AREA INI YANG AKAN DIFOTO */}
             <div style={adminStyles.strukCard} ref={strukRef}>
               <div style={adminStyles.strukHeader}>
                 <h2 style={{ color: "var(--amalfi-tile)", margin: 0 }}>
@@ -294,8 +374,6 @@ function Admin() {
                 </p>
               </div>
             </div>
-
-            {/* AREA TOMBOL */}
             <div
               style={{
                 display: "flex",
@@ -323,6 +401,28 @@ function Admin() {
 
 // === GAYA CSS INTERNAL ===
 const adminStyles = {
+  // Tambahan style untuk halaman login
+  loginPage: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    minHeight: "100vh",
+    backgroundColor: "var(--cream-gelato)",
+    padding: "20px",
+  },
+  loginForm: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    backgroundColor: "white",
+    padding: "40px",
+    borderRadius: "12px",
+    boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+    width: "100%",
+    maxWidth: "350px",
+  },
+
+  // Style dashboard
   dashboardWrapper: {
     minHeight: "100vh",
     backgroundColor: "#fdfbf7",
@@ -388,6 +488,8 @@ const adminStyles = {
     textDecoration: "none",
     fontWeight: "bold",
     fontSize: "14px",
+    border: "none",
+    cursor: "pointer",
   },
   btnDanger: {
     backgroundColor: "#dc3545",
